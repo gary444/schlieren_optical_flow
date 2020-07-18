@@ -1,3 +1,0 @@
-/home/hoqe4365/Documents/opencv/cuda_optical_flow/build/CMakeFiles/rebuild_cache.dir
-/home/hoqe4365/Documents/opencv/cuda_optical_flow/build/CMakeFiles/CudaOpticalFlow.dir
-/home/hoqe4365/Documents/opencv/cuda_optical_flow/build/CMakeFiles/edit_cache.dir

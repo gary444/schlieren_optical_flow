@@ -13,6 +13,8 @@
 
 #include "OpenCVHelper.hpp"
 
+# define CREATE_LEGEND 0
+
 
 
 using namespace cv;
@@ -83,8 +85,16 @@ int main(int argc, char** argv )
 
     // visualise 
 
+    std::cout << "Calculate per-pixel magnitude and angle" << std::endl;
+
+    Mat flow_parts[2];
+    split(of_result, flow_parts);
+    Mat magnitude, angle, magn_norm;
+
     const float max_pixel_movement_shown = 10.f;
 
+
+#if CREATE_LEGEND
     // create legend
     const uint32_t legend_size = 599;
     const float mag_per_pixel = (2.f*max_pixel_movement_shown) / float(legend_size)  ;
@@ -100,32 +110,29 @@ int main(int argc, char** argv )
     cv::repeat(range, legend_size, 1, legend_x_flow);
     cv::transpose(legend_x_flow, legend_y_flow);
 
-
     double min, max;
     cv::minMaxLoc(legend_x_flow, &min, &max);
     std::cout << "Min magnitude = " << min << std::endl;
     std::cout << "Max magnitude = " << max << std::endl;
-    std::cout << "magnitude divided by " << max_pixel_movement_shown << std::endl;
 
 
     printMatInfo(legend_x_flow);
     printMatInfo(legend_y_flow);
 
 
-
-    std::cout << "Calculate per-pixel magnitude and angle" << std::endl;
-
-    Mat flow_parts[2];
-    split(of_result, flow_parts);
-    Mat magnitude, angle, magn_norm;
     cartToPolar(legend_x_flow, legend_y_flow, magnitude, angle, true);
+#else 
 
-    // cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
+    cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
+    
+#endif 
+
     // normalize(magnitude, magn_norm, 0.0f, 1.0f, NORM_MINMAX);
     magn_norm = magnitude / max_pixel_movement_shown;
     angle *= ((1.f / 360.f) * (180.f / 255.f));
 
     std::cout << "Create HSV image" << std::endl;
+    std::cout << "magnitude divided by " << max_pixel_movement_shown << std::endl;
 
 
     //build hsv image
@@ -138,9 +145,11 @@ int main(int argc, char** argv )
     cvtColor(hsv8, bgr, COLOR_HSV2BGR);
 
 
+#if CREATE_LEGEND
+    // add reference circle to legend
     const uint32_t cntr = (legend_size / 2) + 1;
     cv::circle(bgr, Point(cntr, cntr), legend_size/2, Scalar(0,0,0));
-    
+#endif 
 
     if ("" != outpath) imwrite( outpath, bgr );
 
