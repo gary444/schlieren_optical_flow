@@ -154,7 +154,7 @@ int main(int argc, char** argv )
     if ("" != outpath) imwrite( outpath, bgr );
 
 
-    imshow("frame2", bgr);
+    // cv::imshow("frame2", bgr);
 
 
 
@@ -163,7 +163,7 @@ int main(int argc, char** argv )
 
 
 
-    waitKey(0);
+    // waitKey(0);
     // if (keyboard == 'q' || keyboard == 27)
 
 

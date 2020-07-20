@@ -5,7 +5,15 @@ set(PROJECT_NAME "CudaOpticalFlow")
 project( ${PROJECT_NAME} )
 
 
+
 set(CMAKE_CXX_FLAGS "-std=c++11")
+
+# for finding open cv on mac
+if (APPLE) 
+	set (OPENCV_EXTRA_MODULES_PATH "/Library/OpenCV/opencv_contrib/modules")
+
+	set(OpenCV_DIR "/Library/OpenCV/opencv-4.4.0/build_opencv")
+endif()
 
 
 # find_package( OpenCV REQUIRED )
