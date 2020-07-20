@@ -37,13 +37,27 @@ int main(int argc, char* argv[] )
     std::string outpath = "";
     bool NORMALISE = false;
 
-    Mat image1, image2;
-    image1 = imread( "../images/lena_sq1.png", 1 );
-    image2 = imread( "../images/lena_sq2.png", 1 );
+    std::string img1path = "../images/lena_sq1.png";
+    std::string img2path = "../images/lena_sq2.png";
+
+    if (cmd_option_exists(argv, argv+argc, "-h")
+        || argc < 3){
+        std::cout << "Optical flow app\n\n"
+                  << "args 1 and 2 should be images to compare\n\n"
+                  << "flags:\n" 
+                  << "-t: optical flow type:\n" 
+                  << "\t0: DenseRLOFOpticalFlow\n" 
+                  << "\t1: DualTVL1OpticalFlow\n" 
+                  << "-o: output file path\n" 
+                  << "-norm: normalise magnitude image \n"
+                  << std::endl; 
+
+        return 0;
+    } 
 
 
-    if (argc > 1) image1 = imread(argv[1], 1 );
-    if (argc > 2) image2 = imread(argv[2], 1 );
+    if (argc > 1) img1path = argv[1];
+    if (argc > 2) img2path = argv[2];
     if (argc > 3) OF_TYPE = atoi(argv[3]);
 
     if (cmd_option_exists(argv, argv+argc, "-o")){
@@ -54,6 +68,14 @@ int main(int argc, char* argv[] )
         NORMALISE = true;
     } 
 
+
+    std::cout << "Comparing:\n\t" << img1path << "\n\t" << img2path << "\n\n";
+
+
+    Mat image1, image2;
+    image1 = imread( img1path, 1 );
+    image2 = imread( img2path, 1 );
+    
 
 
     if ( !image1.data && !image2.data ){
@@ -181,17 +203,11 @@ int main(int argc, char* argv[] )
     if ("" != outpath) imwrite( outpath, bgr );
 
 
-    // cv::imshow("frame2", bgr);
 
-
-
-
-
-
-
-
-    // waitKey(0);
-    // if (keyboard == 'q' || keyboard == 27)
+#if !__APPLE__
+    cv::imshow("frame2", bgr);
+    waitKey(0);
+#endif
 
 
     return 0;
