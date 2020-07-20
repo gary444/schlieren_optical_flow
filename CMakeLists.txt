@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(PROJECT_NAME "CudaOpticalFlow")
+set(PROJECT_NAME "OpticalFlow")
 
 project( ${PROJECT_NAME} )
 
