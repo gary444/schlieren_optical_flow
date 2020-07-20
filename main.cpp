@@ -19,11 +19,23 @@
 
 using namespace cv;
 
-int main(int argc, char** argv )
+char* get_cmd_option(char** begin, char** end, const std::string & option) {
+    char** it = std::find(begin, end, option);
+    if (it != end && ++it != end)
+        return *it;
+    return 0;
+}
+
+bool cmd_option_exists(char** begin, char** end, const std::string& option) {
+    return std::find(begin, end, option) != end;
+}
+
+int main(int argc, char* argv[] )
 {
 
     uint32_t OF_TYPE = 0;
     std::string outpath = "";
+    bool NORMALISE = false;
 
     Mat image1, image2;
     image1 = imread( "../images/lena_sq1.png", 1 );
@@ -33,7 +45,14 @@ int main(int argc, char** argv )
     if (argc > 1) image1 = imread(argv[1], 1 );
     if (argc > 2) image2 = imread(argv[2], 1 );
     if (argc > 3) OF_TYPE = atoi(argv[3]);
-    if (argc > 4) outpath = argv[4];
+
+    if (cmd_option_exists(argv, argv+argc, "-o")){
+        outpath = get_cmd_option(argv, argv+argc, "-o");
+    } 
+    if (cmd_option_exists(argv, argv+argc, "-norm")){
+        std::cout << "normalisation active\n";
+        NORMALISE = true;
+    } 
 
 
 
@@ -110,10 +129,6 @@ int main(int argc, char** argv )
     cv::repeat(range, legend_size, 1, legend_x_flow);
     cv::transpose(legend_x_flow, legend_y_flow);
 
-    double min, max;
-    cv::minMaxLoc(legend_x_flow, &min, &max);
-    std::cout << "Min magnitude = " << min << std::endl;
-    std::cout << "Max magnitude = " << max << std::endl;
 
 
     printMatInfo(legend_x_flow);
@@ -127,12 +142,24 @@ int main(int argc, char** argv )
     
 #endif 
 
-    // normalize(magnitude, magn_norm, 0.0f, 1.0f, NORM_MINMAX);
+
+    double min, max;
+    cv::minMaxLoc(magnitude, &min, &max);
+    std::cout << "Min magnitude = " << min << std::endl;
+    std::cout << "Max magnitude = " << max << std::endl;
+
+
+
+#if NORMALISE
+    normalize(magnitude, magn_norm, 0.0f, 1.0f, NORM_MINMAX);
+#else 
     magn_norm = magnitude / max_pixel_movement_shown;
+    std::cout << "magnitude divided by " << max_pixel_movement_shown << std::endl;
+#endif
+
     angle *= ((1.f / 360.f) * (180.f / 255.f));
 
     std::cout << "Create HSV image" << std::endl;
-    std::cout << "magnitude divided by " << max_pixel_movement_shown << std::endl;
 
 
     //build hsv image
