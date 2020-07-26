@@ -26,5 +26,16 @@ find_package( OpenCV REQUIRED opencv_optflow) # not CUDA optical flow
 # message("install path: " ${OpenCV_INSTALL_PATH})
 # message("modules: " ${OpenCV_LIB_COMPONENTS})
 
-add_executable( ${PROJECT_NAME} main.cpp OpenCVHelper.hpp )
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
+file(GLOB_RECURSE HELPER_FILES ${PROJECT_SOURCE_DIR}/*.hpp)
+
+# set(PROJECT_INCLUDES "${PROJECT_INCLUDES_H}" "${PROJECT_INCLUDES_HPP}")
+
+
+add_executable( "ofComparison" single_comparison_and_vis.cpp ${HELPER_FILES} )
+target_link_libraries( "ofComparison" ${OpenCV_LIBS} )
+
+add_executable( "ofBatchComparison" batch_comparison.cpp ${HELPER_FILES} )
+target_link_libraries( "ofBatchComparison" ${OpenCV_LIBS} )
+
+add_executable( "visMean" vis_mean_optical_flow.cpp ${HELPER_FILES} )
+target_link_libraries( "visMean" ${OpenCV_LIBS} )
