@@ -1,5 +1,8 @@
-#include <stdio.h>
+
 #include <dirent.h>
+#include <fstream>
+#include <stdio.h>
+
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
@@ -18,7 +21,8 @@
 
 using namespace cv;
 
-
+// app calculates the optical flow between each tepmorally adjacent pair of images in an image sequence
+// outputs the mean optical flow across the whole sequence
 
 int main(int argc, char* argv[] )
 {
@@ -35,6 +39,8 @@ int main(int argc, char* argv[] )
     bool CREATE_LEGEND = false;
     std::string outpath = "";
 
+    std::vector<std::vector<float> > all_path_vals;
+
     if (cmd_option_exists(argv, argv+argc, "-h")
         || !cmd_option_exists(argv, argv+argc, "-dir")
         || argc < 3){
@@ -47,6 +53,7 @@ int main(int argc, char* argv[] )
                   << "-o: output file path\n" 
                   << "-norm: normalise magnitude image \n"
                   << "-legend: create legend image to help interpret optical flow results \n"
+                  << "-n: number of images from directory to use \n"
                   << std::endl; 
 
         return 0;
@@ -114,15 +121,29 @@ int main(int argc, char* argv[] )
     Mat of_result = accum_of;
     Mat last_mat = test; // already loaded first image to get dimensions
 
+
+    Mat of_accum_parts[2];
+    of_accum_parts[0] = Mat(cv::Size(img_width, img_height), CV_32FC1, Scalar(0,0));
+    of_accum_parts[1] = Mat(cv::Size(img_width, img_height), CV_32FC1, Scalar(0,0));
+
+
     using namespace cv::optflow;
 
+    int IMAGES_TO_USE = img_paths.size();
+    if (cmd_option_exists(argv, argv+argc, "-n")){
+        IMAGES_TO_USE = atoi(get_cmd_option(argv, argv+argc, "-n"));
+        IMAGES_TO_USE = std::min(int(img_paths.size()), std::max(IMAGES_TO_USE, 0));
+    } 
 
-    for (int i = 1; i < img_paths.size(); ++i){
-    // for (int i = 1; i < 3; ++i){
+    for (int i = 1; i < IMAGES_TO_USE; ++i){
+
 
         std::cout << "Comparison " << i << std::endl;
 
         Mat mat_to_compare = imread(img_paths[i]);
+
+
+        // Mat mat_to_compare = imread(img_paths[1]);
 
 
         if (OF_TYPE == 0){
@@ -149,10 +170,24 @@ int main(int argc, char* argv[] )
 // printMatInfo(accum_of, "accum");
 printMatInfo(of_result, "of result");
 
+        Mat flow_parts[2];
+        split(of_result, flow_parts);
+
+        of_accum_parts[0] += flow_parts[0];
+        of_accum_parts[1] += flow_parts[1];
+
+
+        std::cout << "result " << of_result.at<float>(0,0,0) << std::endl;
+
         // accumulate of result
-        accum_of += of_result;
+        // accum_of = accum_of + of_result;
+
+        std::cout << "accum " << of_accum_parts[0].at<float>(0,0) << std::endl;
 
 
+        // get magnitude along path
+        std::vector<float> path_vals =  get_flow_magnitude_on_path(flow_parts[0], flow_parts[1], real_width_mm, time_between_imgs_ms);
+        all_path_vals.push_back(path_vals);
 
         last_mat = mat_to_compare;
     }
@@ -163,21 +198,18 @@ printMatInfo(accum_of, "accum of");
     
 
     std::cout << "Calculating mean... " << std::endl;
+    
+    of_accum_parts[0] = of_accum_parts[0] / float(IMAGES_TO_USE-1); // divide by number of comparisons, not images
+    of_accum_parts[1] = of_accum_parts[1] / float(IMAGES_TO_USE-1); // divide by number of comparisons, not images
 
 
-    // calculate mean
-    Mat mean_of = accum_of / (img_paths.size()-1); // divide by number of comparisons, not images
-    // Mat mean_of = accum_of / 2; // divide by number of comparisons, not images
 
 
-    // visualise 
+
     std::cout << "Calculate per-pixel magnitude and angle" << std::endl;
 
-    Mat flow_parts[2];
-    split(mean_of, flow_parts);
     Mat magnitude, angle, magn_norm;
-
-    cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
+    cartToPolar(of_accum_parts[0], of_accum_parts[1], magnitude, angle, true);
 
 
     const float pixel_movement_shown_limit = 10.f;
@@ -200,10 +232,10 @@ printMatInfo(accum_of, "accum of");
 
     Mat out_img;
     if (NORMALISE){
-        mats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);
+        mats_to_hsv(of_accum_parts[0], of_accum_parts[1], max_px_movement, out_img);
     }
     else {
-        mats_to_hsv(flow_parts[0], flow_parts[1], pixel_movement_shown_limit, out_img);
+        mats_to_hsv(of_accum_parts[0], of_accum_parts[1], pixel_movement_shown_limit, out_img);
     }
 
 
@@ -214,7 +246,7 @@ printMatInfo(accum_of, "accum of");
         create_legend(legend_path, leg_max_mag, max_speed_legend);
     }
 
-    printMatInfo(mean_of, "mean of result");
+    // printMatInfo(mean_of, "mean of result");
 
     if ("" != outpath){
 
@@ -225,11 +257,11 @@ printMatInfo(accum_of, "accum of");
         std::string result_path = outpath.substr(0, outpath.length() - 4) + "_result.mat";
         // Mat third_channel ( Size(mean_of.cols, mean_of.rows), mean_of.type() );
 
-        // std::vector<cv::Mat> mean_of_channels;
-
-        // cv::split(mean_of, mean_of_channels);
-        // mean_of_channels.push_back(third_channel);
-        // cv::merge(mean_of_channels, mean_of);
+        Mat mean_of;
+        std::vector<cv::Mat> mean_of_channels;
+        mean_of_channels.push_back(of_accum_parts[0]);
+        mean_of_channels.push_back(of_accum_parts[1]);
+        cv::merge(mean_of_channels, mean_of);
 
         // imwrite( result_path, mean_of );
 
@@ -237,9 +269,24 @@ printMatInfo(accum_of, "accum of");
         cv::FileStorage file(result_path, cv::FileStorage::WRITE);
         file << "mean_of" << mean_of;
 
+
         // imwrite(result_path, mean_of);
 
     } 
+
+
+    // save path values
+    std::ofstream path_val_file("../output/path_vals.txt");
+
+    for (auto list : all_path_vals)
+    {
+        for (auto v : list)
+        {
+            path_val_file << v << ", ";
+        }
+        path_val_file << std::endl;
+    }
+    path_val_file.close();
 
 
     #if !__APPLE__

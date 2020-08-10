@@ -39,3 +39,6 @@ target_link_libraries( "ofBatchComparison" ${OpenCV_LIBS} )
 
 add_executable( "visMean" vis_mean_optical_flow.cpp ${HELPER_FILES} )
 target_link_libraries( "visMean" ${OpenCV_LIBS} )
+
+add_executable( "pathFlow" mean_flow_on_path.cpp ${HELPER_FILES} )
+target_link_libraries( "pathFlow" ${OpenCV_LIBS} )
