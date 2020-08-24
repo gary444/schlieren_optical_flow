@@ -13,6 +13,8 @@
 
 #include <opencv2/optflow.hpp>
 
+#include <opencv2/video/tracking.hpp>
+
 
 #include "OpenCVHelper.hpp"
 #include "optical_flow_helpers.hpp"
@@ -151,6 +153,8 @@ int main(int argc, char* argv[] )
             std::cout << "DenseRLOFOpticalFlow...\n\n";
 
             Ptr<DenseRLOFOpticalFlow> of = DenseRLOFOpticalFlow::create();
+            of->setForwardBackward(8.f);
+
             of->calc(last_mat, mat_to_compare, of_result);
         }
         else if (OF_TYPE == 1) {
@@ -159,11 +163,23 @@ int main(int argc, char* argv[] )
 
             // convert to B+W
             Mat image1_bw, image2_bw;
-            cvtColor(mat_to_compare, image1_bw, cv::COLOR_RGB2GRAY);
-            cvtColor(last_mat, image2_bw, cv::COLOR_RGB2GRAY);
+            cvtColor(mat_to_compare, image2_bw, cv::COLOR_RGB2GRAY);
+            cvtColor(last_mat, image1_bw, cv::COLOR_RGB2GRAY);
 
             Ptr<DualTVL1OpticalFlow> of = DualTVL1OpticalFlow::create();
             of->calc(image1_bw, image2_bw, of_result);
+
+        }
+        else if (OF_TYPE == 2) {
+
+
+            Mat image1_bw, image2_bw;
+            cvtColor(mat_to_compare, image2_bw, cv::COLOR_RGB2GRAY);
+            cvtColor(last_mat, image1_bw, cv::COLOR_RGB2GRAY);
+
+            Ptr<FarnebackOpticalFlow> of = cv::FarnebackOpticalFlow::create();
+            of->calc(image1_bw, image2_bw, of_result);
+
 
         }
 
