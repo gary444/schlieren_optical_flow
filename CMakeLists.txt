@@ -42,3 +42,6 @@ target_link_libraries( "visMean" ${OpenCV_LIBS} )
 
 add_executable( "pathFlow" mean_flow_on_path.cpp ${HELPER_FILES} )
 target_link_libraries( "pathFlow" ${OpenCV_LIBS} )
+
+add_executable( "trackMinMax" minima_and_maxima_tracking.cpp ${HELPER_FILES} )
+target_link_libraries( "trackMinMax" ${OpenCV_LIBS} )
