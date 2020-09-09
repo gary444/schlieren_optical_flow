@@ -17,7 +17,7 @@ endif()
 
 
 # find_package( OpenCV REQUIRED )
-find_package( OpenCV REQUIRED opencv_optflow) # not CUDA optical flow
+find_package( OpenCV REQUIRED opencv_optflow opencv_xfeatures2d) # not CUDA optical flow
 
 
 # message("CV version: " ${OpenCV_VERSION})

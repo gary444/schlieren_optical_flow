@@ -10,6 +10,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/video.hpp>
+#include <opencv2/core/types.hpp>
 
 #include <opencv2/optflow.hpp>
 
@@ -21,13 +22,17 @@
 #include "util.hpp"
 
 
+#include "opencv2/features2d.hpp"
+// #include "opencv2/features2d/nonfree.hpp"	
+
+
 using namespace cv;
 using namespace std;
 
 
-vector <Point> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
+vector <Point2f> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
 {  
-  vector <Point> vMaxLoc(0); 
+  vector <Point2f> vMaxLoc(0); 
 
   if ((MatchingSize % 2 == 0) || (GaussKernel % 2 == 0)) // MatchingSize and GaussKernel have to be "odd" and > 0
   {
@@ -46,7 +51,7 @@ vector <Point> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold,
   {
     GaussianBlur(ProcessImg,ProcessImg,Size(GaussKernel,GaussKernel),0,0,4);
   }
-  uchar* pProcess = (uchar *) ProcessImg.data; // The pointer to image Data 
+  uchar* pProcess = (uchar *) ProcessImg.data; // The Point2fer to image Data 
 
   int Shift = MatchingSquareCenter * ( W + 1);
   int k = 0;
@@ -60,10 +65,12 @@ vector <Point> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold,
       {
         Point LocMax;
         Mat mROI(ProcessImg, Rect(x,y,MatchingSize,MatchingSize));
+        printMatInfo(mROI, "bla");
         minMaxLoc(mROI,NULL,NULL,NULL,&LocMax);
+        std::cout << "done" << std::endl;
         if (LocMax.x == MatchingSquareCenter && LocMax.y == MatchingSquareCenter)
         { 
-          vMaxLoc.push_back(Point( x+LocMax.x,y + LocMax.y )); 
+          vMaxLoc.push_back(Point2f( float(x+LocMax.x),float(y + LocMax.y) )); 
           // imshow("W1",mROI);cvWaitKey(0); //For gebug              
         }
       }
@@ -73,7 +80,7 @@ vector <Point> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold,
   return vMaxLoc; 
 }
 
-float vdist(Point a, Point b) {
+float vdist(Point2f a, Point2f b) {
 	return sqrt( pow(a.x-b.x, 2) + pow(a.y-b.y, 2));
 }
 
@@ -140,7 +147,7 @@ int main(int argc, char* argv[] )
     const float real_width_mm = 1481.f;
     const float time_between_imgs_ms = 20.0f;
 
-    std::string outpath = "../output/maxima.png";
+    std::string outpath = "../output/maxima2.png";
 
     std::vector<std::vector<float> > all_path_vals;
 
@@ -152,6 +159,7 @@ int main(int argc, char* argv[] )
                   << "-dir: directory containing a sequence of images to be processed to find mean optical flow:\n" 
                   << "-o: output file path\n" 
                   << "-n: number of images from directory to use \n"
+                  << "-m: mask path \n"
                   << std::endl; 
 
         return 0;
@@ -191,15 +199,24 @@ int main(int argc, char* argv[] )
     for (auto path : img_paths) std::cout << path << std::endl;
     std::cout << "Total: " << img_paths.size() << " images " << std::endl;
 
+	std::string mask_path = "";
+	// Mat mask;
+	// if (cmd_option_exists(argv, argv+argc, "-m")){
+ //        mask_path = get_cmd_option(argv, argv+argc, "-m");
+ //        mask = imread(mask_path);
+ //    	cvtColor(mask, mask, cv::COLOR_RGB2GRAY);
+
+ //    } 
+
 
 
     Mat test = imread(img_paths[0]);
     Mat input;
     cvtColor(test, input, cv::COLOR_RGB2GRAY);
 
-    Mat input_inv = 255 - input;
+    // Mat input_inv = 255 - input;
 
- //    std::vector<Point> locations;
+ //    std::vector<Point2f> locations;
 	// imregionalmax(input, 10, 0.9, 10, locations);
 	// for (auto l : locations) {
 	// 	std::cout << l.x << ", " << l.y << std::endl;
@@ -219,28 +236,79 @@ printMatInfo(input, "input");
 
 	// std::cout << "sum : " << sum(localMaxima) << std::endl;
 
+	cvtColor(input, input, cv::COLOR_GRAY2RGB);
+    Mat input_inv = 255 - input;
+	
+
+ 	//MIN MAX DETECTion
+
+    std::cout << "ifnding min and max points..." << std::endl; 
+
 
 	// GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
-	vector <Point> points = GetLocalMaxima(input, 21, 20, 1 );
-	vector <Point> inv_points = GetLocalMaxima(input_inv, 21, 20, 1 );
+	vector <Point2f> points = GetLocalMaxima(input, 21, 20, 1 );
+	vector <Point2f> inv_points = GetLocalMaxima(input_inv, 21, 20, 1 );
+	//merge points to one vector
 
-	imwrite("../output/maxima_w.png", input);
+    std::cout << "combining..." << std::endl; 
 
-	cvtColor(input, input, cv::COLOR_GRAY2RGB);
+	points.insert(points.end(), inv_points.begin(), inv_points.end());
+
+	// imwrite("../output/maxima_w.png", input);
+	// for (auto l : points) {
+	// 	// std::cout << l.x << ", " << l.y << std::endl;
+ // 		//  void circle(Mat& img, Point center, int radius, const Scalar& color, int thickness=1, int lineType=8, int shift=0)¶
+	// 	circle(input,l,3,(255),1,8);
+	// }
+	// for (auto l : inv_points) {
+	// 	circle(input,l,3,(255,0),1,8);
+	// }
+
+	// imwrite(outpath, input);
+
+	//SIFT
+
+	// Mat mask;
+	// std::vector<KeyPoint> kp;
+	// cv::SIFT sift ();
+	// sift(input, mask, kp, cv::noArray());
+	// // kp = sift.detect(input,None)
+	// // Mat img = cv.drawKeypoints(input,kp,img)
+	//  // C++: void drawKeypoints(const Mat& image, const vector<KeyPoint>& keypoints, Mat& outImage, const Scalar& color=Scalar::all(-1), int flags=DrawMatchesFlags::DEFAULT )¶
+	// Mat img;
+	// drawKeypoints(input, kp, img, Scalar(255));
+
+/*
+	// SIFT features
+	// detection does not produce as many points as min/max detection
+	Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);
+    std::vector<cv::KeyPoint> keypoints;
+    sift->detect(input, keypoints, mask);
+*/
+
+	// for (auto p : points){
+	// 	keypoints.push_back()
+	// }
+
+    std::cout << "converting..." << std::endl; 
 
 
-	for (auto l : points) {
-		// std::cout << l.x << ", " << l.y << std::endl;
- 		//  void circle(Mat& img, Point center, int radius, const Scalar& color, int thickness=1, int lineType=8, int shift=0)¶
-		circle(input,l,3,(255),1,8);
-	}
-
-	for (auto l : inv_points) {
-		circle(input,l,3,(255,0),1,8);
-	}
+    std::vector<cv::KeyPoint> keypoints;
+    cv::KeyPoint::convert(keypoints, points);
 
 
-	imwrite(outpath, input);
+    std::cout << "Found " << keypoints.size() << " keypoints" << std::endl; 
+
+    Mat descriptors;
+	Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);
+    sift->compute( input, keypoints, descriptors);
+
+    // Add results to image and save.
+    cv::Mat output;
+    cv::drawKeypoints(input, keypoints, output);
+
+	imwrite(outpath,output);
+
 
 
 
