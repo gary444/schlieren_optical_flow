@@ -65,9 +65,7 @@ vector <Point> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold,
       {
         Point LocMax;
         Mat mROI(ProcessImg, Rect(x,y,MatchingSize,MatchingSize));
-        printMatInfo(mROI, "bla");
         minMaxLoc(mROI,NULL,NULL,NULL,&LocMax);
-        std::cout << "done" << std::endl;
         if (LocMax.x == MatchingSquareCenter && LocMax.y == MatchingSquareCenter)
         { 
           vMaxLoc.push_back(Point2f( x+LocMax.x,y + LocMax.y )); 
@@ -214,7 +212,7 @@ int main(int argc, char* argv[] )
     Mat input;
     cvtColor(test, input, cv::COLOR_RGB2GRAY);
 
-    // Mat input_inv = 255 - input;
+    Mat input_inv = 255 - input;
 
  //    std::vector<Point2f> locations;
 	// imregionalmax(input, 10, 0.9, 10, locations);
@@ -236,8 +234,6 @@ printMatInfo(input, "input");
 
 	// std::cout << "sum : " << sum(localMaxima) << std::endl;
 
-	cvtColor(input, input, cv::COLOR_GRAY2RGB);
-    Mat input_inv = 255 - input;
 	
 
  	//MIN MAX DETECTion
@@ -247,12 +243,18 @@ printMatInfo(input, "input");
 
 	// GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
 	vector <Point> points = GetLocalMaxima(input, 21, 20, 1 );
-	// vector <Point2f> inv_points = GetLocalMaxima(input_inv, 21, 20, 1 );
+	vector <Point> inv_points = GetLocalMaxima(input_inv, 21, 20, 1 );
 	//merge points to one vector
+	points.insert(points.end(), inv_points.begin(), inv_points.end());
 
-    std::cout << "combining..." << std::endl; 
+  std::vector<Point2f> points2f;
+  for (auto p : points){
+    points2f.push_back(Point2f(p.x,p.y));
+  }
 
-	// points.insert(points.end(), inv_points.begin(), inv_points.end());
+  // convert input back to RGB
+  cvtColor(input, input, cv::COLOR_GRAY2RGB);
+
 
 	// imwrite("../output/maxima_w.png", input);
 	// for (auto l : points) {
@@ -291,12 +293,16 @@ printMatInfo(input, "input");
 	// }
 
 
-/*
+
     std::cout << "converting..." << std::endl; 
 
 
     std::vector<cv::KeyPoint> keypoints;
-    cv::KeyPoint::convert(keypoints, points);
+    // cv::KeyPoint::convert(keypoints, points2f);
+
+    for(auto p : points2f){
+      keypoints.push_back(KeyPoint(p.x, p.y, 21));
+    }
 
 
     std::cout << "Found " << keypoints.size() << " keypoints" << std::endl; 
@@ -308,9 +314,9 @@ printMatInfo(input, "input");
     // Add results to image and save.
     cv::Mat output;
     cv::drawKeypoints(input, keypoints, output);
-*/
 
-	// imwrite(outpath,output);
+
+	  imwrite(outpath,output);
 
 
 
