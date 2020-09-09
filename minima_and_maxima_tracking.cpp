@@ -10,7 +10,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/video.hpp>
-#include <opencv2/core/types.hpp>
+// #include <opencv2/core/types.hpp>
 
 #include <opencv2/optflow.hpp>
 
@@ -22,7 +22,7 @@
 #include "util.hpp"
 
 
-#include "opencv2/features2d.hpp"
+// #include "opencv2/features2d.hpp"
 // #include "opencv2/features2d/nonfree.hpp"	
 
 
@@ -30,9 +30,9 @@ using namespace cv;
 using namespace std;
 
 
-vector <Point2f> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
+vector <Point> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
 {  
-  vector <Point2f> vMaxLoc(0); 
+  vector <Point> vMaxLoc(0); 
 
   if ((MatchingSize % 2 == 0) || (GaussKernel % 2 == 0)) // MatchingSize and GaussKernel have to be "odd" and > 0
   {
@@ -70,7 +70,7 @@ vector <Point2f> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshol
         std::cout << "done" << std::endl;
         if (LocMax.x == MatchingSquareCenter && LocMax.y == MatchingSquareCenter)
         { 
-          vMaxLoc.push_back(Point2f( float(x+LocMax.x),float(y + LocMax.y) )); 
+          vMaxLoc.push_back(Point2f( x+LocMax.x,y + LocMax.y )); 
           // imshow("W1",mROI);cvWaitKey(0); //For gebug              
         }
       }
@@ -80,7 +80,7 @@ vector <Point2f> GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshol
   return vMaxLoc; 
 }
 
-float vdist(Point2f a, Point2f b) {
+float vdist(Point a, Point b) {
 	return sqrt( pow(a.x-b.x, 2) + pow(a.y-b.y, 2));
 }
 
@@ -246,13 +246,13 @@ printMatInfo(input, "input");
 
 
 	// GetLocalMaxima(const cv::Mat Src,int MatchingSize, int Threshold, int GaussKernel  )
-	vector <Point2f> points = GetLocalMaxima(input, 21, 20, 1 );
-	vector <Point2f> inv_points = GetLocalMaxima(input_inv, 21, 20, 1 );
+	vector <Point> points = GetLocalMaxima(input, 21, 20, 1 );
+	// vector <Point2f> inv_points = GetLocalMaxima(input_inv, 21, 20, 1 );
 	//merge points to one vector
 
     std::cout << "combining..." << std::endl; 
 
-	points.insert(points.end(), inv_points.begin(), inv_points.end());
+	// points.insert(points.end(), inv_points.begin(), inv_points.end());
 
 	// imwrite("../output/maxima_w.png", input);
 	// for (auto l : points) {
@@ -290,6 +290,8 @@ printMatInfo(input, "input");
 	// 	keypoints.push_back()
 	// }
 
+
+/*
     std::cout << "converting..." << std::endl; 
 
 
@@ -300,14 +302,15 @@ printMatInfo(input, "input");
     std::cout << "Found " << keypoints.size() << " keypoints" << std::endl; 
 
     Mat descriptors;
-	Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);
+	  Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);
     sift->compute( input, keypoints, descriptors);
 
     // Add results to image and save.
     cv::Mat output;
     cv::drawKeypoints(input, keypoints, output);
+*/
 
-	imwrite(outpath,output);
+	// imwrite(outpath,output);
 
 
 
