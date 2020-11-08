@@ -16,9 +16,10 @@
 #include <opencv2/video/tracking.hpp>
 
 
-#include "OpenCVHelper.hpp"
-#include "optical_flow_helpers.hpp"
-#include "util.hpp"
+
+#include "helpers/OpenCVHelper.hpp"
+#include "helpers/optical_flow_helpers.hpp"
+#include "helpers/util.hpp"
 
 
 using namespace cv;
