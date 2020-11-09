@@ -1,5 +1,5 @@
 #include <opencv2/core.hpp>
-
+#include <opencv2/features2d.hpp>
 
 #include "Descriptors.hpp"
 
@@ -89,13 +89,18 @@ std::vector<cv::Point> find_min_max_keypoints_in_image (const cv::Mat& img){
 	return points;
 }
 
-void calculate_descriptors_at_points(const std::vector<cv::Point>& points, const cv::Mat& img, cv::Mat& descriptors, const std::string& outpath){
+std::vector<cv::KeyPoint> convert_points_to_keypoints(const std::vector<cv::Point>& points){
 
 	// convert to key points
 	std::vector<cv::KeyPoint> keypoints;
 	for(auto p : points){
 		keypoints.push_back(cv::KeyPoint(p.x, p.y, 21));
 	}
+	return keypoints;
+}
+
+void calculate_descriptors_at_points(std::vector<cv::KeyPoint>& keypoints, const cv::Mat& img, cv::Mat& descriptors, const std::string& outpath){
+
 	
 	std::cout << "Computing SIFT descriptors " << std::endl;
 	cv::Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);
@@ -105,7 +110,7 @@ void calculate_descriptors_at_points(const std::vector<cv::Point>& points, const
 	if ("" != outpath){
 		std::cout << "Drawing SIFT descriptors " << std::endl;
 		cv::Mat output;
-		cv::drawKeypoints(img, keypoints, output);
+		cv::drawKeypoints(img, keypoints, output, cv::Scalar::all(-1), cv::DrawMatchesFlags(4));
 		imwrite(outpath,output);
 	}
 

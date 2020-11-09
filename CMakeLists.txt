@@ -26,7 +26,7 @@ find_package( OpenCV REQUIRED opencv_optflow opencv_xfeatures2d) # not CUDA opti
 # message("install path: " ${OpenCV_INSTALL_PATH})
 # message("modules: " ${OpenCV_LIB_COMPONENTS})
 
-file(GLOB_RECURSE HELPER_FILES ${PROJECT_SOURCE_DIR}/helpers/* ${PROJECT_SOURCE_DIR}/descriptors/*)
+file(GLOB_RECURSE HELPER_FILES ${PROJECT_SOURCE_DIR}/helpers/* ${PROJECT_SOURCE_DIR}/feature_matching/*)
 
 message(${HELPER_FILES})
 

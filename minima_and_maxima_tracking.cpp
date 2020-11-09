@@ -13,6 +13,7 @@
 #include <opencv2/optflow.hpp>
 
 #include <opencv2/video/tracking.hpp>
+#include <opencv2/features2d.hpp>
 
 
 
@@ -20,7 +21,8 @@
 #include "helpers/optical_flow_helpers.hpp"
 #include "helpers/util.hpp"
 
-#include "descriptors/Descriptors.hpp"
+#include "feature_matching/Descriptors.hpp"
+#include "feature_matching/Matching.hpp"
 
 using namespace cv;
 using namespace std;
@@ -100,10 +102,16 @@ int main(int argc, char* argv[] )
     const uint32_t num_imgs_to_process = default_num_imgs_to_process;
 
 
-
+    std::vector<std::vector<cv::KeyPoint> > keypoint_array (num_imgs_to_process /*std::vector<cv::KeyPoint>()*/);
     std::vector<Mat> descriptor_array (num_imgs_to_process);
 
+    // TODO could use below function for batch processing
+  // void cv::Feature2D::compute   (   InputArrayOfArrays    images, std::vector< std::vector< KeyPoint > > &    keypoints, OutputArrayOfArrays   descriptors )   
+
+
     for (uint32_t i = 0; i < num_imgs_to_process; ++i){
+
+      std::cout << "Finding descriptors in image: " << i << std::endl;
 
       // create grey images for min/max detection
       Mat blr_img = imread(blur_img_paths[i]);
@@ -113,8 +121,49 @@ int main(int argc, char* argv[] )
       cvtColor(blr_img, blr_img_grey, cv::COLOR_RGB2GRAY);
 
       std::vector<cv::Point> points = find_min_max_keypoints_in_image (blr_img_grey);
+      keypoint_array[i] = convert_points_to_keypoints(points);
 
-      calculate_descriptors_at_points(points, og_img, descriptor_array[i], outpath + "_" + std::to_string(i) + ".png");
+      calculate_descriptors_at_points(keypoint_array[i], og_img, descriptor_array[i], outpath + "_" + std::to_string(i) + ".png");
+
+    }
+
+
+    // compare images
+    for (uint32_t i = 1; i < num_imgs_to_process; ++i){
+
+      std::cout << "Finding matches between images " << i-1 << " and " << i << std::endl;
+
+      std::vector<DMatch> matches = match_descriptors(descriptor_array[i-1], descriptor_array[i]);
+
+      Mat og_imgA  = imread(og_img_paths[i-1]);
+      Mat og_imgB  = imread(og_img_paths[i]);
+
+      Mat out_img_matches;
+      drawMatches( og_imgA, keypoint_array[i-1], 
+                   og_imgB, keypoint_array[i], 
+                   matches, 
+                   out_img_matches, 
+                   Scalar(0,255,0), // match colour
+                   Scalar(128,0,0) // no-match colour
+                   // std::vector<char>(), 
+                   // DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS 
+                   );
+
+      imwrite("matches_" + std::to_string(i-1) + "_" + std::to_string(i) + ".png", out_img_matches);
+
+
+      // plot matches on the same images as arrows
+      Mat out_arrow_img = og_imgA.clone();
+      for (const auto& match : matches) {
+        // std::cout << "Match: " << match.queryIdx << ", " << match.trainIdx << std::endl;
+        const auto& kpA = keypoint_array[i-1][match.queryIdx];
+        const auto& kpB = keypoint_array[i][match.trainIdx];
+      
+        cv::arrowedLine(out_arrow_img, kpA.pt, kpB.pt, Scalar(0,255,0));
+      }
+      imwrite("movement_" + std::to_string(i-1) + "_" + std::to_string(i) + ".png", out_arrow_img);
+
+
 
     }
 
