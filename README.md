@@ -5,15 +5,29 @@
 
 ### minima_and_maxima_sift_feature_matching
 
-	Requires a directory containing Schlieren images, and another directory containing blurred Schlieren images as input. Blur can be done using a third-party software like [ImageMagick](https://imagemagick.org/script/mogrify.php).
+Requires a directory containing Schlieren images, and another directory containing blurred Schlieren images as input. Blur can be done using a third-party software like [ImageMagick](https://imagemagick.org/script/mogrify.php).
 
-	Key points are found at the minima and maxima of the blurred images. SIFT features are created at these keypoints, and the best feature matches are used to estimate flow between pairs of adjacent images.
+Key points are found at the minima and maxima of the blurred images. SIFT features are created at these keypoints, and the best feature matches are used to estimate flow between pairs of adjacent images.
 
 ### image_pair_optical_flow_estimation_and_vis
+	
+Estimates optical flow for a pair of given images. Allows selection of OF type.
+
 ### batch_optical_flow_estimation
+
+Estimates optical flow for an ordered set of given images in a directory. 
+
 ### visualise_mean_optical_flow
+
+Visualises an optical flow field with an arrow in each grid cell.  
+
 ### mean_flow_on_path
+
+Calculates mean flow magnitude on a line across an image.
+
 ### of_lukas_kanade
+
+Detect keypoints and track with Lukas-Kanade optical flow.
 
 
 
