@@ -1,5 +1,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/features2d.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
 
 #include "Descriptors.hpp"
 
@@ -103,7 +104,7 @@ void calculate_descriptors_at_points(std::vector<cv::KeyPoint>& keypoints, const
 
 	
 	std::cout << "Computing SIFT descriptors " << std::endl;
-	cv::Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);
+	auto sift =  cv::xfeatures2d::SIFT::create(100, 10, 0, 50.0, 0.5);
 	sift->compute( img, keypoints, descriptors);
 
 	//If path provided, draw points to image and save.

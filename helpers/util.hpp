@@ -46,3 +46,17 @@ std::vector<std::string> get_file_paths_from_directory(const std::string& indir,
 
     return img_paths;
 }
+
+std::vector<cv::Scalar> create_random_colours(const uint32_t num_colours) {
+
+    std::vector<cv::Scalar> colors;
+    cv::RNG rng;
+    for(uint32_t i = 0; i < num_colours; i++)
+    {
+        int r = rng.uniform(0, 256);
+        int g = rng.uniform(0, 256);
+        int b = rng.uniform(0, 256);
+        colors.push_back(cv::Scalar(r,g,b));
+    }
+    return colors;
+}

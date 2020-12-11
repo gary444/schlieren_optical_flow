@@ -51,6 +51,7 @@ int main(int argc, char* argv[] )
                   << "-o: output file path\n" 
                   << "-norm: normalise magnitude image \n"
                   << "-legend: create legend image to help interpret optical flow results \n"
+                  << "-flo: write flow as float binary with dimensions \n"
                   << std::endl; 
 
         return 0;
@@ -167,6 +168,34 @@ int main(int argc, char* argv[] )
         std::cout << "Writing image to " << outpath << std::endl;
         imwrite( outpath, out_img );
     } 
+
+    if (cmd_option_exists(argv, argv+argc, "-flo")){
+        const std::string ofilepath = get_cmd_option(argv, argv+argc, "-flo");
+        // write to file
+
+        std::ofstream outfile(ofilepath, std::ios::binary);
+
+        if (!outfile.is_open()){
+            std::cout << "Error creating file " << ofilepath << std::endl;
+            return false;
+        }
+        uint32_t width  = of_result.cols;
+        uint32_t height = of_result.rows;
+
+        outfile.write(reinterpret_cast<char*> (&width), sizeof(uint32_t));
+        outfile.write(reinterpret_cast<char*> (&height), sizeof(uint32_t));
+        outfile.write(reinterpret_cast<char*> (of_result.ptr<float>(0,0)), sizeof(float) * 2 * width * height);
+
+        outfile.close();
+        if (!outfile.good()){
+            std::cout << "Error creating file " << ofilepath << std::endl;
+            return false;
+        }
+
+        std::cout << "Successfully saved Optical Flow\n";
+        return true;
+
+    }
 
 
 #if !__APPLE__
