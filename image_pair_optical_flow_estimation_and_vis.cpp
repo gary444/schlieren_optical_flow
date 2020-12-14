@@ -51,7 +51,8 @@ int main(int argc, char* argv[] )
                   << "-o: output file path\n" 
                   << "-norm: normalise magnitude image \n"
                   << "-legend: create legend image to help interpret optical flow results \n"
-                  << "-flo: write flow as float binary with dimensions \n"
+                  << "-flo: write flow as float binary with name \n"
+                  << "-show: show result in popup window \n"
                   << std::endl; 
 
         return 0;
@@ -72,6 +73,8 @@ int main(int argc, char* argv[] )
     } 
 
     CREATE_LEGEND = cmd_option_exists(argv, argv+argc, "-legend");
+
+    bool SHOW_RESULT = cmd_option_exists(argv, argv+argc, "-show");
 
     // load images
     std::cout << "Comparing:\n\t" << img1path << "\n\t" << img2path << "\n\n";
@@ -199,8 +202,10 @@ int main(int argc, char* argv[] )
 
 
 #if !__APPLE__
-    cv::imshow("optical flow", out_img);
-    waitKey(0);
+    if (SHOW_RESULT){
+        cv::imshow("optical flow", out_img);
+        waitKey(0);
+    }
 #endif
 
 
