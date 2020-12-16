@@ -19,7 +19,8 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 find_package( OpenCV REQUIRED opencv_optflow opencv_xfeatures2d) # not CUDA optical flow
 
 
-# message("CV version: " ${OpenCV_VERSION})
+message("CV version: " ${OpenCV_VERSION})
+message("CV libs : " ${OpenCV_LIBS})
 # message("optflow: " ${OpenCV_CUDAOPTFLOW_FOUND})
 # message("include dirs: " ${OpenCV_INCLUDE_DIRS})
 # message("install path: " ${OpenCV_INSTALL_PATH})
@@ -47,3 +48,6 @@ target_link_libraries( "minima_and_maxima_sift_feature_matching" ${OpenCV_LIBS} 
 
 add_executable( "of_lukas_kanade" of_lukas_kanade.cpp ${HELPER_FILES} )
 target_link_libraries( "of_lukas_kanade" ${OpenCV_LIBS} )
+
+add_executable( "depth_image_of" depth_image_optical_flow.cpp ${HELPER_FILES} )
+target_link_libraries( "depth_image_of" ${OpenCV_LIBS} )
