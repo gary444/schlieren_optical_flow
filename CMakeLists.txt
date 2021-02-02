@@ -16,7 +16,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 
 
 # find_package( OpenCV REQUIRED )
-find_package( OpenCV REQUIRED opencv_optflow opencv_xfeatures2d) # not CUDA optical flow
+find_package( OpenCV REQUIRED opencv_optflow opencv_xfeatures2d opencv_cudaoptflow) # not CUDA optical flow
 
 
 message("CV version: " ${OpenCV_VERSION})
@@ -51,3 +51,6 @@ target_link_libraries( "of_lukas_kanade" ${OpenCV_LIBS} )
 
 add_executable( "depth_image_of" depth_image_optical_flow.cpp ${HELPER_FILES} )
 target_link_libraries( "depth_image_of" ${OpenCV_LIBS} )
+
+add_executable( "brox_of" brox_of.cpp ${HELPER_FILES} )
+target_link_libraries( "brox_of" ${OpenCV_LIBS} )

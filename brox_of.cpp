@@ -12,6 +12,8 @@
 
 #include <opencv2/optflow.hpp>
 
+#include <opencv2/cudaoptflow.hpp>
+
 
 
 #include "helpers/OpenCVHelper.hpp"
@@ -22,37 +24,6 @@
 
 using namespace cv;
 
-const float min_depth = 0.5f;
-const float max_depth = 3.0f;
-
-float normalize_depth(float depth) {
-  return (depth - min_depth)/(max_depth - min_depth);
-}
-
-Mat load_depth_image_to_mat (const std::string& path, const uint32_t depth_image_width, const uint32_t depth_image_height) {
-
-    std::vector<float> depth_image_data (depth_image_height * depth_image_width);
-
-    std::ifstream infile (path, std::ios::binary);
-    infile.read(reinterpret_cast<char*> (depth_image_data.data()), sizeof(float) * depth_image_width * depth_image_height);
-    infile.close();
-
-    std::transform(depth_image_data.begin(), depth_image_data.end(), depth_image_data.begin(), [&](const float depth) {
-        return normalize_depth(depth);
-    });
-
-    Mat img (depth_image_height, depth_image_width, CV_32FC1, depth_image_data.data());
-    Mat img_8bit;
-    img.convertTo(img_8bit, CV_8UC1, 255.0);
-
-
-    // cv::imshow("depth_image", img_8bit);
-    // waitKey(0);
-
-    return img_8bit;
-}
-
-
 int main(int argc, char* argv[] )
 {
 
@@ -62,7 +33,7 @@ int main(int argc, char* argv[] )
     const float time_between_imgs_ms = 20.0f;
 
     // optical flow settings
-    uint32_t OF_TYPE = 0;
+    // uint32_t OF_TYPE = 0;
     bool NORMALISE = false;
 
     bool CREATE_LEGEND = false;
@@ -72,26 +43,25 @@ int main(int argc, char* argv[] )
     std::string img2path = "../images/lena_sq2.png";
 
     if (cmd_option_exists(argv, argv+argc, "-h")
-        || argc < 5){
-        std::cout << "Optical flow app for depth images\n\n"
-                  << "./depth_image_optical_flow [img1path] [img2path] [imgwidth] [imgheight] [options....]\n\n"
+        || argc < 3){
+        std::cout << "Optical flow app\n\n"
+                  << "args 1 and 2 should be images to compare\n\n"
                   << "flags:\n" 
-                  << "-t: optical flow type:\n" 
-                  << "\t0: DenseRLOFOpticalFlow\n" 
-                  << "\t1: DualTVL1OpticalFlow\n" 
+                  // << "-t: optical flow type:\n" 
+                  // << "\t0: DenseRLOFOpticalFlow\n" 
+                  // << "\t1: DualTVL1OpticalFlow\n" 
                   << "-o: output file path\n" 
                   << "-norm: normalise magnitude image \n"
                   << "-legend: create legend image to help interpret optical flow results \n"
-                  << "-flo: write flow as float binary with dimensions \n"
+                  << "-flo: write flow as float binary with name \n"
+                  << "-show: show result in popup window \n"
                   << std::endl; 
 
         return 0;
     } 
 
-    img1path = argv[1];
-    img2path = argv[2];
-    const uint32_t width  = atoi(argv[3]);
-    const uint32_t height = atoi(argv[4]);
+    if (argc > 1) img1path = argv[1];
+    if (argc > 2) img2path = argv[2];
 
     if (cmd_option_exists(argv, argv+argc, "-o")){
         outpath = get_cmd_option(argv, argv+argc, "-o");
@@ -100,22 +70,19 @@ int main(int argc, char* argv[] )
         std::cout << "normalisation active\n";
         NORMALISE = true;
     } 
-    if (cmd_option_exists(argv, argv+argc, "-t")){
-        OF_TYPE = atoi(get_cmd_option(argv, argv+argc, "-t"));
-    } 
+    // if (cmd_option_exists(argv, argv+argc, "-t")){
+    //     OF_TYPE = atoi(get_cmd_option(argv, argv+argc, "-t"));
+    // } 
 
     CREATE_LEGEND = cmd_option_exists(argv, argv+argc, "-legend");
 
+    bool SHOW_RESULT = cmd_option_exists(argv, argv+argc, "-show");
+
     // load images
     std::cout << "Comparing:\n\t" << img1path << "\n\t" << img2path << "\n\n";
-    // Mat image1in, image2in;
     Mat image1, image2;
-    
-    image1 = load_depth_image_to_mat(img1path, width, height);
-    image2 = load_depth_image_to_mat(img2path, width, height);
-
-    // image1in.convertTo(image1, CV_8UC1, 255.0);
-    // image1in.convertTo(image1, CV_8UC1, 255.0);
+    image1 = imread( img1path, 1 );
+    image2 = imread( img2path, 1 );
 
     if ( !image1.data && !image2.data ){
         printf("No image data \n");
@@ -127,25 +94,30 @@ int main(int argc, char* argv[] )
 
     // optical flow -----------------------------------------------------------------
     using namespace cv::optflow;
-    Mat of_result (image1.rows, image1.cols, CV_32FC2);
+    Mat of_result (image1.rows, image1.cols, CV_32FC1);
 
-    if (OF_TYPE == 0){
 
-        std::cout << "DenseRLOFOpticalFlow...\n\n";
+    std::cout << "CUDA accelerated Brox Optical Flow...\n\n";
 
-        Ptr<DenseRLOFOpticalFlow> of = DenseRLOFOpticalFlow::create();
-        of->calc(image1, image2, of_result);
-    }
-    else if (OF_TYPE == 1) {
+    Mat image1_bw, image2_bw;
 
-        std::cout << "DualTVL1OpticalFlow...\n\n";
+    cvtColor(image1, image1_bw, cv::COLOR_RGB2GRAY);
+    cvtColor(image2, image2_bw, cv::COLOR_RGB2GRAY);
 
-        Ptr<DualTVL1OpticalFlow> of = DualTVL1OpticalFlow::create();
-        of->calc(image1, image2, of_result);
+    image1_bw.convertTo(image1_bw, CV_32FC1, 1.0/255.0);
+    image2_bw.convertTo(image2_bw, CV_32FC1, 1.0/255.0);
 
-    }
+    // create parameters:
+	// double alpha=0.197, double gamma=50.0, double scale_factor=0.8, int inner_iterations=5, int outer_iterations=150, int solver_iterations=10
+    Ptr<cv::cuda::BroxOpticalFlow> of = cv::cuda::BroxOpticalFlow::create();
     
-    std::cout << "Done." << std::endl;
+    // convert to GPU mats
+    
+    cuda::GpuMat gpu_img_1 = cuda::GpuMat(image1_bw);
+    cuda::GpuMat gpu_img_2 = cuda::GpuMat(image2_bw);
+	cuda::GpuMat gpu_result = cuda::GpuMat(of_result); 
+
+    of->calc(gpu_img_1, gpu_img_2, of_result);
 
     printMatInfo(of_result, "optical flow result");
 
@@ -234,8 +206,10 @@ int main(int argc, char* argv[] )
 
 
 #if !__APPLE__
-    cv::imshow("optical flow", out_img);
-    waitKey(0);
+    if (SHOW_RESULT){
+        cv::imshow("optical flow", out_img);
+        waitKey(0);
+    }
 #endif
 
 

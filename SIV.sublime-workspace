@@ -4,6 +4,30 @@
 		"selected_items":
 		[
 			[
+				"iag",
+				"image1"
+			],
+			[
+				"depth_",
+				"depth_image_data"
+			],
+			[
+				"load",
+				"load_depth_image_to_mat"
+			],
+			[
+				"image",
+				"image1"
+			],
+			[
+				"depth",
+				"depth_image_data"
+			],
+			[
+				"de",
+				"depth_image_width"
+			],
+			[
 				"fl",
 				"flo"
 			],
@@ -490,45 +514,11 @@
 			[
 				"MAX",
 				"MAX_CIRCLE_SIZE"
-			],
-			[
-				"as",
-				"aspect_ratio"
-			],
-			[
-				"lon",
-				"lon_range"
-			],
-			[
-				"la",
-				"lat_range"
-			],
-			[
-				"convert",
-				"convert_coord"
-			],
-			[
-				"con",
-				"convert_coord"
-			],
-			[
-				"pub",
-				"pubs_to_circle_size"
 			]
 		]
 	},
 	"buffers":
 	[
-		{
-			"contents": "Searching 83 files for \"SIFT\" (regex)\n\n0 matches\n\nSearching 88 files for \"SIFT\" (regex)\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/feature_matching/Descriptors.cpp:\n  103  \n  104  \t\n  105: \tstd::cout << \"Computing SIFT descriptors \" << std::endl;\n  106: \tcv::Ptr< cv::SIFT> sift =  cv::SIFT::create(100, 10, 0, 50.0, 0.5);\n  107: \tsift->compute( img, keypoints, descriptors);\n  108  \n  109  \t//If path provided, draw points to image and save.\n  110  \tif (\"\" != outpath){\n  111: \t\tstd::cout << \"Drawing SIFT descriptors \" << std::endl;\n  112  \t\tcv::Mat output;\n  113  \t\tcv::drawKeypoints(img, keypoints, output, cv::Scalar::all(-1), cv::DrawMatchesFlags(4));\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/feature_matching/Matching.cpp:\n    8  \tusing namespace cv;\n    9  \n   10:  \tconst int normType = NORM_L2; // best for SIFT. ORB and other binary descriptors should be compared with NORM_HAMMING2\n   11  \tconst bool crossCheck = true; // check in both directions for more reliable matches\n   12  \tauto matcher = BFMatcher::create(normType, crossCheck); \n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/minima_and_maxima_tracking.cpp:\n   51          || !cmd_option_exists(argv, argv+argc, \"-diro\")\n   52          || argc < 3){\n   53:         std::cout << \"App for tracking flow at min max points with SIFT features\\n\\n\"\n   54                    << \"flags:\\n\" \n   55                    << \"-diro: directory containing original sequence of images\\n\" \n   ..\n  175        //              Scalar(128,0,0) // no-match colour\n  176        //              );\n  177:       // imwrite(\"../../../images/output/sift_descriptors/matches_\" + std::to_string(i-1) + \"_\" + std::to_string(i) + \".png\", out_img_matches);\n  178  \n  179  \n  ...\n  181        Mat out_arrow_img = og_imgB.clone();\n  182        draw_matches_as_arrows(matches, keypoint_arrays[i-1], keypoint_arrays[i], out_arrow_img, min_highlight_distance_px, max_highlight_distance_px);\n  183:       imwrite(\"../../../images/output/sift_descriptors/movement_1f_\" + std::to_string(i-1) + \"_\" + std::to_string(i) + \".png\", out_arrow_img);\n  184  \n  185  \n  ...\n  201        Mat out_arrow_img = og_imgB.clone();\n  202        draw_matches_as_arrows(matches, keypoint_arrays[i-2], keypoint_arrays[i], out_arrow_img, min_highlight_distance_px*2, max_highlight_distance_px*2);\n  203:       imwrite(\"../../../images/output/sift_descriptors/movement_2f_\" + std::to_string(i-2) + \"_\" + std::to_string(i) + \".png\", out_arrow_img);\n  204  \n  205  \n\n11 matches across 3 files\n",
-			"settings":
-			{
-				"buffer_size": 2536,
-				"line_ending": "Unix",
-				"name": "Find Results",
-				"scratch": true
-			}
-		},
 		{
 			"contents": "#include <stdio.h>\n#include <sstream>\n\n#include <opencv2/opencv.hpp>\n#include <opencv2/core.hpp>\n#include <opencv2/highgui.hpp>\n#include <opencv2/imgproc.hpp>\n#include <opencv2/videoio.hpp>\n#include <opencv2/video.hpp>\n\n// #include <opencv2/cudaoptflow.hpp>\n\n#include <opencv2/optflow.hpp>\n\n\n\n#include \"helpers/OpenCVHelper.hpp\"\n#include \"helpers/optical_flow_helpers.hpp\"\n#include \"helpers/util.hpp\"\n\n\n\nusing namespace cv;\n\nint main(int argc, char* argv[] )\n{\n\n\n    //capture properties\n    const float real_width_mm = 1481.f;\n    const float time_between_imgs_ms = 20.0f;\n\n    // optical flow settings\n    uint32_t OF_TYPE = 0;\n    bool NORMALISE = false;\n\n    bool CREATE_LEGEND = false;\n\n    std::string outpath = \"\";\n    std::string img1path = \"../images/lena_sq1.png\";\n    std::string img2path = \"../images/lena_sq2.png\";\n\n    if (cmd_option_exists(argv, argv+argc, \"-h\")\n        || argc < 3){\n        std::cout << \"Optical flow app\\n\\n\"\n                  << \"args 1 and 2 should be images to compare\\n\\n\"\n                  << \"flags:\\n\" \n                  << \"-t: optical flow type:\\n\" \n                  << \"\\t0: DenseRLOFOpticalFlow\\n\" \n                  << \"\\t1: DualTVL1OpticalFlow\\n\" \n                  << \"-o: output file path\\n\" \n                  << \"-norm: normalise magnitude image \\n\"\n                  << \"-legend: create legend image to help interpret optical flow results \\n\"\n                  << \"-flo: write flow as float binary with dimensions \\n\"\n                  << std::endl; \n\n        return 0;\n    } \n\n    if (argc > 1) img1path = argv[1];\n    if (argc > 2) img2path = argv[2];\n\n    if (cmd_option_exists(argv, argv+argc, \"-o\")){\n        outpath = get_cmd_option(argv, argv+argc, \"-o\");\n    } \n    if (cmd_option_exists(argv, argv+argc, \"-norm\")){\n        std::cout << \"normalisation active\\n\";\n        NORMALISE = true;\n    } \n    if (cmd_option_exists(argv, argv+argc, \"-t\")){\n        OF_TYPE = atoi(get_cmd_option(argv, argv+argc, \"-t\"));\n    } \n\n    CREATE_LEGEND = cmd_option_exists(argv, argv+argc, \"-legend\");\n\n    // load images\n    std::cout << \"Comparing:\\n\\t\" << img1path << \"\\n\\t\" << img2path << \"\\n\\n\";\n    Mat image1, image2;\n    image1 = imread( img1path, 1 );\n    image2 = imread( img2path, 1 );\n\n    if ( !image1.data && !image2.data ){\n        printf(\"No image data \\n\");\n        return -1;\n    }\n    printMatInfo(image1, \"image1\");\n    printMatInfo(image2, \"image2\");\n\n\n    // optical flow -----------------------------------------------------------------\n    using namespace cv::optflow;\n    Mat of_result = image1;\n\n    if (OF_TYPE == 0){\n\n        std::cout << \"DenseRLOFOpticalFlow...\\n\\n\";\n\n        Ptr<DenseRLOFOpticalFlow> of = DenseRLOFOpticalFlow::create();\n        of->calc(image1, image2, of_result);\n    }\n    else if (OF_TYPE == 1) {\n\n        std::cout << \"DualTVL1OpticalFlow...\\n\\n\";\n\n        Mat image1_bw, image2_bw;\n\n        cvtColor(image1, image1_bw, cv::COLOR_RGB2GRAY);\n        cvtColor(image2, image2_bw, cv::COLOR_RGB2GRAY);\n\n        Ptr<DualTVL1OpticalFlow> of = DualTVL1OpticalFlow::create();\n        of->calc(image1_bw, image2_bw, of_result);\n\n    }\n    \n    printMatInfo(of_result, \"optical flow result\");\n\n\n    // visualise \n\n    std::cout << \"Calculate per-pixel magnitude and angle\" << std::endl;\n\n    Mat flow_parts[2];\n    split(of_result, flow_parts);\n    Mat magnitude, angle, magn_norm;\n\n    cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);\n\n\n    const float pixel_movement_shown_limit = 10.f;\n\n    // rcalculate and eport min and max magnitude before normalisation\n    double min_px_movement, max_px_movement;\n    cv::minMaxLoc(magnitude, &min_px_movement, &max_px_movement);\n    std::cout << \"Min magnitude = \" << min_px_movement << std::endl;\n    std::cout << \"Max magnitude = \" << max_px_movement << std::endl;\n\n\n    // calculate max displacement and speed\n    const float mm_per_pixel = real_width_mm / image1.cols;\n    const float max_displacement = max_px_movement * mm_per_pixel;\n    const float max_speed = max_displacement / time_between_imgs_ms;\n\n    std::cout << \"Max displacement = \" << max_displacement << std::endl;\n    std::cout << \"Max speed        = \" << max_speed << std::endl;\n\n\n    Mat out_img;\n    if (NORMALISE){\n        mats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);\n    }\n    else {\n        mats_to_hsv(flow_parts[0], flow_parts[1], pixel_movement_shown_limit, out_img);\n    }\n\n\n    if (CREATE_LEGEND){\n        const float leg_max_mag = NORMALISE ? max_px_movement : pixel_movement_shown_limit;\n        const float max_speed_legend = NORMALISE ? max_speed : (pixel_movement_shown_limit*mm_per_pixel/time_between_imgs_ms);\n        const std::string legend_path = \"../images/legend_\" + std::to_string(leg_max_mag) + \".png\";\n        create_legend(legend_path, leg_max_mag, max_speed_legend);\n    }\n    \n\n\n\n\n    if (\"\" != outpath){\n        std::cout << \"Writing image to \" << outpath << std::endl;\n        imwrite( outpath, out_img );\n    } \n\n    if (cmd_option_exists(argv, argv+argc, \"-flo\")){\n        const std::string ofilepath = get_cmd_option(argv, argv+argc, \"-flo\");\n        // write to file\n\n        std::ofstream outfile(ofilepath, std::ios::binary);\n\n        if (!outfile.is_open()){\n            std::cout << \"Error creating file \" << ofilepath << std::endl;\n            return false;\n        }\n        uint32_t width  = of_result.cols;\n        uint32_t height = of_result.rows;\n\n        outfile.write(reinterpret_cast<char*> (&width), sizeof(uint32_t));\n        outfile.write(reinterpret_cast<char*> (&height), sizeof(uint32_t));\n        outfile.write(reinterpret_cast<char*> (of_result.ptr<float>(0,0)), sizeof(float) * 2 * width * height);\n\n        outfile.close();\n        if (!outfile.good()){\n            std::cout << \"Error creating file \" << ofilepath << std::endl;\n            return false;\n        }\n\n        std::cout << \"Successfully saved Optical Flow\\n\";\n        return true;\n\n    }\n\n\n#if !__APPLE__\n    cv::imshow(\"optical flow\", out_img);\n    waitKey(0);\n#endif\n\n\n    return 0;\n}",
 			"file": "single_comparison_and_vis.cpp",
@@ -537,7 +527,6 @@
 			"settings":
 			{
 				"buffer_size": 6051,
-				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
@@ -545,7 +534,7 @@
 			"file": "CMakeLists.txt",
 			"settings":
 			{
-				"buffer_size": 1849,
+				"buffer_size": 2021,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -561,10 +550,44 @@
 			}
 		},
 		{
-			"file": "/home/hoqe4365/.config/sublime-text-3/Packages/User/stdcout.sublime-snippet",
+			"contents": "Searching 193 files for \"mats_to\" (regex)\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/batch_optical_flow_estimation.cpp:\n  250      Mat out_img;\n  251      if (NORMALISE){\n  252:         mats_to_hsv(of_accum_parts[0], of_accum_parts[1], max_px_movement, out_img);\n  253      }\n  254      else {\n  255:         mats_to_hsv(of_accum_parts[0], of_accum_parts[1], pixel_movement_shown_limit, out_img);\n  256      }\n  257  \n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/batch_optical_flow_estimation:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/image_pair_optical_flow_estimation_and_vis:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/mean_flow_on_path:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/minima_and_maxima_sift_feature_matching:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/ofBatch:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/ofBatchComparison:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/ofComparison:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/ofLukasKanade:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/ofPair:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/of_lukas_kanade:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/pathFlow:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/trackMinMax:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/visMean:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/build/visualise_mean_optical_flow:\n    <binary>\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/helpers/optical_flow_helpers.hpp:\n    8  \n    9  \n   10: void mats_to_hsv(cv::Mat x, cv::Mat y, const float normalisation_val, cv::Mat& out) {\n   11  \n   12  \tusing namespace cv;\n   ..\n   54  \n   55      Mat legend;\n   56:     mats_to_hsv(legend_x_flow, legend_y_flow, normalisation_val, legend);\n   57  \n   58  \n   ..\n  100   //    cv::minMaxLoc(magnitude, &min_px_movement, &max_px_movement);\n  101  \t// Mat out_img;\n  102: \t// mats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);\n  103   //    cv::arrowedLine(out_img, line_start, line_end, Scalar(255,255,255));\n  104  \n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/image_pair_optical_flow_estimation_and_vis.cpp:\n  150      Mat out_img;\n  151      if (NORMALISE){\n  152:         mats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);\n  153      }\n  154      else {\n  155:         mats_to_hsv(flow_parts[0], flow_parts[1], pixel_movement_shown_limit, out_img);\n  156      }\n  157  \n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/mean_flow_on_path.cpp:\n   84      cv::minMaxLoc(magnitude, &min_px_movement, &max_px_movement);\n   85  \tMat out_img;\n   86: \tmats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);\n   87      cv::arrowedLine(out_img, line_start, line_end, Scalar(255,255,255));\n   88  \n   ..\n  226  //     Mat out_img;\n  227  //     if (NORMALISE){\n  228: //         mats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);\n  229  //     }\n  230  //     else {\n  231: //         mats_to_hsv(flow_parts[0], flow_parts[1], pixel_movement_shown_limit, out_img);\n  232  //     }\n  233  \n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/visualise_mean_optical_flow.cpp:\n  182      Mat out_img;\n  183      if (NORMALISE){\n  184:         mats_to_hsv(flow_parts[0], flow_parts[1], max_px_movement, out_img);\n  185      }\n  186      else {\n  187:         mats_to_hsv(flow_parts[0], flow_parts[1], pixel_movement_shown_limit, out_img);\n  188      }\n  189  \n  ...\n  210  \n  211      // Mat out_img;\n  212:     // mats_to_hsv(ds_parts[0], ds_parts[1], 10, out_img);\n  213  \n  214  \n\n41 matches across 19 files\n\n\nSearching 205 files for \"downsample\" (regex)\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/mean_flow_on_path.cpp:\n  128  // #if 0\n  129  \n  130: // \t// downsample magnitude and angle\n  131  \n  132  //     Mat flow_parts[2];\n  ...\n  149  // #else\n  150  \n  151: //     // downsample x and y components\n  152  \n  153  //     Mat ds_of_image;\n\n/home/hoqe4365/Documents/repos/schlieren_optical_flow/visualise_mean_optical_flow.cpp:\n   84  #if 0\n   85  \n   86: \t// downsample magnitude and angle\n   87  \n   88      Mat flow_parts[2];\n   ..\n  105  #else\n  106  \n  107:     // downsample x and y components\n  108  \n  109      Mat ds_of_image;\n\n4 matches across 2 files\n",
 			"settings":
 			{
-				"buffer_size": 298,
+				"buffer_size": 4614,
+				"line_ending": "Unix",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "visualise_mean_optical_flow.cpp",
+			"settings":
+			{
+				"buffer_size": 6867,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "batch_optical_flow_estimation.cpp",
+			"settings":
+			{
+				"buffer_size": 9694,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "minima_and_maxima_sift_feature_matching.cpp",
+			"settings":
+			{
+				"buffer_size": 7882,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "image_pair_optical_flow_estimation_and_vis.cpp",
+			"settings":
+			{
+				"buffer_size": 6211,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -627,6 +650,8 @@
 	],
 	"file_history":
 	[
+		"/home/hoqe4365/Documents/repos/schlieren_optical_flow/depth_image_optical_flow.cpp",
+		"/home/hoqe4365/.config/sublime-text-3/Packages/User/stdcout.sublime-snippet",
 		"/home/hoqe4365/Pictures/embedded_deformation/optflo_corrs/sparse_of/lukas_kanade_tests/grid_point_selection_sp20_wndw30.png",
 		"/home/hoqe4365/Documents/repos/schlieren_optical_flow/helpers/util.hpp",
 		"/home/hoqe4365/Documents/repos/schlieren_optical_flow/SIV.sublime-project",
@@ -752,9 +777,7 @@
 		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/apps/data_block_vis/main.cpp",
 		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/apps/projective_texture_creator/stb_image_write.h",
 		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/common/include/grt/FileExtensions.h",
-		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/apps/gpu_multi_tree_extraction/stb_image_write.h",
-		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/apps/sandbox/CMakeLists.txt",
-		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/apps/projective_texture_creator/main.cpp"
+		"/home/hoqe4365/Documents/thesis/Temporal_TSDF_SVO/apps/gpu_multi_tree_extraction/stb_image_write.h"
 	],
 	"find":
 	{
@@ -774,6 +797,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"downsample",
+			"mats_to",
+			"-flo",
 			"create_random_colours",
 			"NORMALISE",
 			"SIFT"
@@ -794,97 +820,11 @@
 	"groups":
 	[
 		{
-			"selected": 3,
+			"selected": 4,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2536,
-						"regions":
-						{
-							"match":
-							{
-								"flags": 112,
-								"regions":
-								[
-									[
-										226,
-										230
-									],
-									[
-										280,
-										284
-									],
-									[
-										286,
-										290
-									],
-									[
-										298,
-										302
-									],
-									[
-										343,
-										347
-									],
-									[
-										514,
-										518
-									],
-									[
-										843,
-										847
-									],
-									[
-										1330,
-										1334
-									],
-									[
-										1628,
-										1632
-									],
-									[
-										2005,
-										2009
-									],
-									[
-										2388,
-										2392
-									]
-								],
-								"scope": ""
-							}
-						},
-						"selection":
-						[
-							[
-								159,
-								159
-							]
-						],
-						"settings":
-						{
-							"detect_indentation": false,
-							"line_numbers": false,
-							"output_tag": 2,
-							"result_base_dir": "",
-							"result_file_regex": "^([^ \t].*):$",
-							"result_line_regex": "^ +([0-9]+):",
-							"scroll_past_end": true,
-							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 45.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
 					"file": "single_comparison_and_vis.cpp",
 					"semi_transient": false,
 					"settings":
@@ -907,27 +847,27 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1196.0,
+						"translation.y": 1145.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
+					"buffer": 1,
 					"file": "CMakeLists.txt",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1849,
+						"buffer_size": 2021,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1653,
-								1653
+								575,
+								575
 							]
 						],
 						"settings":
@@ -935,14 +875,14 @@
 							"syntax": "Packages/Python/Python.sublime-syntax"
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 17.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
+					"buffer": 2,
 					"file": "of_lukas_kanade.cpp",
 					"semi_transient": false,
 					"settings":
@@ -966,39 +906,240 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1392.0,
+						"translation.y": 884.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4614,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										198,
+										205
+									],
+									[
+										321,
+										328
+									],
+									[
+										1861,
+										1868
+									],
+									[
+										2026,
+										2033
+									],
+									[
+										2229,
+										2236
+									],
+									[
+										2558,
+										2565
+									],
+									[
+										2673,
+										2680
+									],
+									[
+										2954,
+										2961
+									],
+									[
+										3192,
+										3199
+									],
+									[
+										3316,
+										3323
+									],
+									[
+										3574,
+										3581
+									],
+									[
+										3689,
+										3696
+									],
+									[
+										3845,
+										3852
+									],
+									[
+										4104,
+										4114
+									],
+									[
+										4223,
+										4233
+									],
+									[
+										4412,
+										4422
+									],
+									[
+										4522,
+										4532
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								4327,
+								4327
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 2,
+							"result_base_dir": "",
+							"result_file_regex": "^([^ \t].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2006.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
 					"buffer": 4,
-					"file": "/home/hoqe4365/.config/sublime-text-3/Packages/User/stdcout.sublime-snippet",
+					"file": "visualise_mean_optical_flow.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 298,
+						"buffer_size": 6867,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								273,
-								273
+								2552,
+								2552
 							]
 						],
 						"settings":
 						{
-							"default_extension": "sublime-snippet",
-							"syntax": "Packages/XML/XML.sublime-syntax"
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1408.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "batch_optical_flow_estimation.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9694,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6970,
+								6970
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2691.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "minima_and_maxima_sift_feature_matching.cpp",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 7882,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2199,
+								2199
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1683.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "image_pair_optical_flow_estimation_and_vis.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6211,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								39,
+								39
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 51.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
 					"type": "text"
 				}
 			]
@@ -1037,7 +1178,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 100.0
+		"height": 328.0
 	},
 	"output.find_results":
 	{
